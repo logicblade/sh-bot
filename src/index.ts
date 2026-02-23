@@ -5,6 +5,9 @@ import { ADMIN_ID } from "./lib/bot/helpers";
 import nodeCron from "node-cron";
 import { informUserExpiry } from "./lib/bot/remider";
 
+export const WHICH_PANEL = "T1";
+export const WHICH_INBOUND = "8";
+
 dotenv.config({ quiet: true });
 
 export const db = new DB();

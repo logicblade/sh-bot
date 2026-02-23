@@ -45,6 +45,34 @@ export class Panel {
     return `${url}${this.BASE_PATH}${this.UPDATE_CLIENT_PATH}${uuid}`;
   }
 
+  getAddClientPath(url: string) {
+    return `${url}${this.BASE_PATH}/addClient`;
+  }
+
+  async getInboundByID(inboundID: number) {
+    const url = `${this.url}${this.BASE_PATH}/get/${inboundID}`;
+    const req = Util.newGetRequest(url, this.headers);
+
+    const res = await fetch(req);
+    const js = (await res.json()) as Omit<GetInboundResponse, "obj"> & {
+      obj: Omit<Obj, "settings" | "streamSettings"> & {
+        settings: string;
+        streamSettings: string;
+      };
+    };
+
+    const parsed: GetInboundResponse = {
+      ...js,
+      obj: js.obj && {
+        ...js.obj,
+        settings: JSON.parse(js.obj.settings) as Settings,
+        streamSettings: JSON.parse(js.obj.streamSettings) as StreamSettings,
+      },
+    };
+
+    return parsed;
+  }
+
   async resetClientTraffic(inboundID: number, email: string) {
     await this.handleLogin();
 
@@ -92,7 +120,27 @@ export class Panel {
     }
   }
 
-  async getUserConfig(userID: number) {
+  async addClientToInbound(inboundID: number, email: string, UUID: string) {
+    await this.handleLogin();
+  }
+
+  async getConfigJSON() {
+    await this.handleLogin();
+
+    const url = `${this.url}/panel/api/server/getConfigJson`;
+    const req = Util.newGetRequest(url, this.headers);
+
+    try {
+      const res = await fetch(req);
+      const js = (await res.json()) as ConfigJSON;
+      return js;
+    } catch (error) {
+      console.error("Failed to get config JSON:", error);
+      return;
+    }
+  }
+
+  async getUserConfigs(userID: number) {
     await this.handleLogin();
 
     const inbounds = await this.getInbounds();

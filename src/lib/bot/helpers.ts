@@ -17,14 +17,20 @@ import type { Conversation } from "@grammyjs/conversations";
 import { db } from "../..";
 import { getAllPanels } from "../panel/panel";
 import { Util } from "../../util/util";
+import { creatingEmail } from "./bot";
 
 export const ADMIN_ID = Number(process.env.ADMIN_ID!);
 export const renewCache: Record<number, UserConfig[]> = {};
 
 export const waitingForRenewImage = new Set<number>();
 export const pendingRenewals = new Map<number, { photoFileID: string }>();
-export const pendingConfig = new Map<number, PendingConfig>();
+export const pendingConfig = new Map<number, PendingRenewConfig>();
 export const pendingConfigType = new Map<number, ConfigPrice>();
+
+export const waitingForCreateImage = new Set<number>();
+export const pendingCreates = new Map<number, { photoFileID: string }>();
+export const pendingCreateConfig = new Set<number>();
+export const pendingCreateConfigType = new Map<number, ConfigPrice>();
 
 const replyToAdmin = async (ctx: Context, msg: string) => {
   return await ctx.api.sendMessage(ADMIN_ID, msg, { reply_markup: adminMenu });
@@ -43,6 +49,7 @@ export async function handleStartCommandForUser(ctx: Context, db: DB) {
 
 export async function handleImagesIncome(ctx: Context) {
   const userID = ctx.from?.id!;
+
   if (!ctx.message?.photo) {
     waitingForRenewImage.delete(userID);
     pendingConfig.delete(userID);
@@ -52,33 +59,72 @@ export async function handleImagesIncome(ctx: Context) {
     const photo = ctx.message.photo.at(-1);
     if (!photo) return;
 
-    waitingForRenewImage.delete(userID);
-
-    pendingRenewals.set(userID, { photoFileID: photo.file_id });
-
-    const uuid = pendingConfig.get(userID)?.UUID!;
-    const configs = renewCache[userID]?.filter(
-      (v) =>
-        (v.isRenewable && v.uuid === uuid) ||
-        (v.status === false && v.uuid === uuid),
+    console.log("Received photo from user", userID);
+    console.log(
+      "user has a",
+      waitingForCreateImage.has(userID)
+        ? "pending create request"
+        : waitingForRenewImage.has(userID)
+          ? "pending renewal request"
+          : "no pending requests",
     );
-    const email = Util.removeEmoji(configs?.at(0)?.email!);
-    const type = pendingConfigType.get(userID)!;
 
-    await ctx.api.sendPhoto(ADMIN_ID, photo.file_id, {
-      caption: `درخواست تمدید از طرف کاربر\n${userID}\n\n${email}\n${type}`,
-      reply_markup: {
-        inline_keyboard: [
-          [
-            { text: "✅ قبول", callback_data: `renewAccept:${userID}` },
-            { text: "❌ رد", callback_data: `renewDecline:${userID}` },
+    if (waitingForRenewImage.has(userID)) {
+      waitingForRenewImage.delete(userID);
+
+      pendingRenewals.set(userID, { photoFileID: photo.file_id });
+
+      const uuid = pendingConfig.get(userID)?.UUID!;
+      const configs = renewCache[userID]?.filter(
+        (v) =>
+          (v.isRenewable && v.uuid === uuid) ||
+          (v.status === false && v.uuid === uuid),
+      );
+      const email = Util.removeEmoji(configs?.at(0)?.email!);
+      const type = pendingConfigType.get(userID)!;
+
+      await ctx.api.sendPhoto(ADMIN_ID, photo.file_id, {
+        caption: `درخواست تمدید از طرف کاربر\n${userID}\n\n${email}\n${type}`,
+        reply_markup: {
+          inline_keyboard: [
+            [
+              { text: "✅ قبول", callback_data: `renewAccept:${userID}` },
+              { text: "❌ رد", callback_data: `renewDecline:${userID}` },
+            ],
           ],
-        ],
-      },
-    });
+        },
+      });
 
-    await ctx.reply(reciptReceiveTxt, { reply_markup: mainMenu });
-    return;
+      await ctx.reply(reciptReceiveTxt, { reply_markup: mainMenu });
+      return;
+    } else if (waitingForCreateImage.has(userID)) {
+      console.log("Creating new account for user", userID);
+      waitingForCreateImage.delete(userID);
+
+      pendingCreates.set(userID, { photoFileID: photo.file_id });
+
+      const type = pendingCreateConfigType.get(userID)!;
+      const randomThreeDigit = Math.floor(Math.random() * 900) + 100;
+      const firstThreeDigit = userID.toString().slice(0, 3);
+      const email = `${firstThreeDigit}${randomThreeDigit}`;
+
+      creatingEmail.set(userID, email);
+
+      await ctx.api.sendPhoto(ADMIN_ID, photo.file_id, {
+        caption: `درخواست ساخت اکانت جدید از طرف کاربر\n${userID}\n\n${email}\n${type}`,
+        reply_markup: {
+          inline_keyboard: [
+            [
+              { text: "✅ قبول", callback_data: `createAccept:${userID}` },
+              { text: "❌ رد", callback_data: `createDecline:${userID}` },
+            ],
+          ],
+        },
+      });
+
+      await ctx.reply(reciptReceiveTxt, { reply_markup: mainMenu });
+      return;
+    }
   }
 }
 
@@ -152,6 +198,32 @@ export const handleRenewDeclineCallback = async (ctx: Context) => {
   await ctx.answerCallbackQuery();
 };
 
+export const handleCreateDeclineCallback = async (ctx: Context) => {
+  const adminId = ctx.from?.id!;
+  if (adminId !== ADMIN_ID)
+    return await ctx.answerCallbackQuery({ text: "Not allowed" });
+
+  const userId = Number(ctx.callbackQuery?.data!.replace("createDecline:", ""));
+  const pending = pendingCreates.get(userId);
+  if (!pending)
+    return await ctx.answerCallbackQuery({ text: "No pending request" });
+
+  pendingCreates.delete(userId);
+  pendingCreateConfig.delete(userId);
+  pendingCreateConfigType.delete(userId);
+
+  await ctx.api.sendMessage(
+    userId,
+    `‼️رسید پرداخت شما توسط ادمین رد شد‼️
+
+با آیدی پشتیبانی در ارتباط باشید👇🏼
+
+🆔: @foxngsup`,
+  );
+  await ctx.reply("رد شد ❌");
+  await ctx.answerCallbackQuery();
+};
+
 export async function handleRenewAccount(ctx: Context, db: DB) {
   const looking = await ctx.reply(searchingTxt);
 
@@ -159,7 +231,7 @@ export async function handleRenewAccount(ctx: Context, db: DB) {
   let configs: UserConfig[] = [];
 
   for (const panel of panels) {
-    const config = await panel.getUserConfig(ctx.from?.id!);
+    const config = await panel.getUserConfigs(ctx.from?.id!);
     if (config) {
       config.forEach((conf) => configs.push(conf));
     }
@@ -183,6 +255,16 @@ export async function handleRenewAccount(ctx: Context, db: DB) {
   }
 }
 
+export async function handleCreateAccount(ctx: Context) {
+  pendingCreateConfig.add(ctx.from?.id!);
+  await ctx.reply(
+    "اشتراک مورد نظرتو انتخاب کن 👇\n\nاگه نیاز به حجم بیشتر داری با پشتیبانی تماس بگیر 👇\n\n🆔: @foxngsup",
+    {
+      reply_markup: renewMenu,
+    },
+  );
+}
+
 export async function handleCheckAccount(ctx: Context, db: DB) {
   const looking = await ctx.reply(searchingTxt);
 
@@ -190,7 +272,7 @@ export async function handleCheckAccount(ctx: Context, db: DB) {
   let configs: UserConfig[] = [];
 
   for (const panel of panels) {
-    const config = await panel.getUserConfig(ctx.from?.id!);
+    const config = await panel.getUserConfigs(ctx.from?.id!);
     if (config) {
       config.forEach((conf) => configs.push(conf));
     }
@@ -337,4 +419,46 @@ export async function getConfigsPanel(uuid: string, db: DB) {
       }
     }
   }
+}
+
+export async function generateConfigURL(
+  tgID: number,
+  inbounds: GetInboundsResponse,
+  url: string,
+) {
+  for (let obj of inbounds.obj) {
+    for (let client of obj.settings.clients) {
+      if (tgID === client.tgId) {
+        return `${obj.protocol}://${client.id}@${new URL(url).hostname}:${obj.port}?type=${obj.streamSettings.network}&encryption=${obj.settings.encryption || "none"}&security=${obj.streamSettings.security}#${obj.remark}-${client.email}`;
+      }
+    }
+  }
+}
+
+export function generateVmessLink(data: {
+  name: string;
+  server: string;
+  port: number;
+  uuid: UUID;
+  network: string;
+  path?: string;
+  host?: string;
+  tls?: string;
+}) {
+  const vmessConfig = {
+    v: "2",
+    ps: data.name,
+    add: data.server,
+    port: data.port.toString(),
+    id: data.uuid,
+    aid: "0",
+    net: data.network,
+    type: "http",
+    host: data.host || "",
+    path: data.path || "",
+    tls: data.tls || "",
+  };
+
+  const base64 = Buffer.from(JSON.stringify(vmessConfig)).toString("base64");
+  return `vmess://${base64}`;
 }

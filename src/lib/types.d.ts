@@ -9,7 +9,7 @@ interface Credential {
 
 type ConfigPrice = "250" | "450";
 
-interface PendingConfig {
+interface PendingRenewConfig {
   UUID: string;
   inboundID: number;
 }
@@ -50,6 +50,12 @@ interface GetInboundsResponse {
   success: boolean;
   msg: string;
   obj: Obj[];
+}
+
+interface GetInboundResponse {
+  success: boolean;
+  msg: string;
+  obj: Obj;
 }
 
 interface Obj {
@@ -117,7 +123,7 @@ interface Client {
 interface StreamSettings {
   network: string;
   security: string;
-  externalProxy: any[];
+  externalProxy: ExternalProxy[];
   tcpSettings: {
     acceptProxyProtocol: boolean;
     header: {
@@ -125,3 +131,160 @@ interface StreamSettings {
     };
   };
 }
+
+interface ExternalProxy {
+  forceTls: string;
+  dest: string;
+  port: number;
+  remark: string;
+}
+
+interface ConfigJSON {
+  success: boolean;
+  msg: string;
+  obj: ObjJSON;
+}
+
+interface ObjJSON {
+  api: API;
+  burstObservatory: null;
+  dns: null;
+  fakedns: null;
+  inbounds: Inbound[];
+  log: Log;
+  metrics: Metrics;
+  observatory: null;
+  outbounds: Outbound[];
+  policy: Policy;
+  reverse: null;
+  routing: Routing;
+  stats: Stats;
+  transport: null;
+}
+
+interface API {
+  services: string[];
+  tag: string;
+}
+
+interface Inbound {
+  listen: null | string;
+  port: number;
+  protocol: string;
+  settings: InboundSettings;
+  sniffing: Sniffing | null;
+  streamSettings: StreamSettings | null;
+  tag: string;
+}
+
+interface InboundSettings {
+  address?: string;
+  clients?: Client[];
+  decryption?: string;
+  encryption?: string;
+  testseed?: number[];
+}
+
+interface Client {
+  email: string;
+  flow?: string;
+  id: string;
+  password?: string;
+}
+
+interface Sniffing {
+  destOverride: DestOverride[];
+  enabled: boolean;
+  metadataOnly: boolean;
+  routeOnly: boolean;
+}
+
+enum DestOverride {
+  Fakedns = "fakedns",
+  HTTP = "http",
+  Quic = "quic",
+  TLS = "tls",
+}
+
+interface StreamSettings {
+  kcpSettings: KcpSettings;
+  network: string;
+  security: string;
+}
+
+interface KcpSettings {
+  congestion: boolean;
+  downlinkCapacity: number;
+  header: Header;
+  mtu: number;
+  readBufferSize: number;
+  seed: string;
+  tti: number;
+  uplinkCapacity: number;
+  writeBufferSize: number;
+}
+
+interface Header {
+  type: string;
+}
+
+interface Log {
+  access: string;
+  dnsLog: boolean;
+  error: string;
+  loglevel: string;
+  maskAddress: string;
+}
+
+interface Metrics {
+  listen: string;
+  tag: string;
+}
+
+interface Outbound {
+  protocol: string;
+  settings: OutboundSettings;
+  tag: string;
+}
+
+interface OutboundSettings {
+  domainStrategy?: string;
+  noises?: any[];
+  redirect?: string;
+}
+
+interface Policy {
+  levels: Levels;
+  system: System;
+}
+
+interface Levels {
+  "0": The0;
+}
+
+interface The0 {
+  statsUserDownlink: boolean;
+  statsUserUplink: boolean;
+}
+
+interface System {
+  statsInboundDownlink: boolean;
+  statsInboundUplink: boolean;
+  statsOutboundDownlink: boolean;
+  statsOutboundUplink: boolean;
+}
+
+interface Routing {
+  domainStrategy: string;
+  rules: Rule[];
+}
+
+interface Rule {
+  inboundTag?: string[];
+  outboundTag: string;
+  type: string;
+  ip?: string[];
+  protocol?: string[];
+}
+
+interface Stats {}
