@@ -444,6 +444,7 @@ export function generateVmessLink(data: {
   path?: string;
   host?: string;
   tls?: string;
+  header: string;
 }) {
   const vmessConfig = {
     v: "2",
@@ -453,7 +454,7 @@ export function generateVmessLink(data: {
     id: data.uuid,
     aid: "0",
     net: data.network,
-    type: "http",
+    type: data.header,
     host: data.host || "",
     path: data.path || "",
     tls: data.tls || "",

@@ -128,8 +128,23 @@ interface StreamSettings {
     acceptProxyProtocol: boolean;
     header: {
       type: string;
+      request: {
+        version: string;
+        method: string;
+        path: string[];
+        headers: {
+          Host: string[];
+        };
+      };
+      response: {
+        version: string;
+        status: string;
+        reason: string;
+        headers: {};
+      };
     };
   };
+  kcpSettings: KcpSettings;
 }
 
 interface ExternalProxy {
@@ -204,12 +219,6 @@ enum DestOverride {
   HTTP = "http",
   Quic = "quic",
   TLS = "tls",
-}
-
-interface StreamSettings {
-  kcpSettings: KcpSettings;
-  network: string;
-  security: string;
 }
 
 interface KcpSettings {

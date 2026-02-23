@@ -303,11 +303,19 @@ export class TelBot {
               port: inbound.obj.port,
               uuid: uuid,
               network: inbound.obj.streamSettings.network,
-              host: "backup.movie4dl.xyz",
-              path: "/e200=host",
+              host: inbound.obj.streamSettings.tcpSettings.header.request.headers.Host.at(
+                0,
+              ),
+              path: inbound.obj.streamSettings.tcpSettings.header.request.path.at(
+                0,
+              ),
+              header: inbound.obj.streamSettings.tcpSettings.header.type,
             });
           } else if (inbound.obj.protocol === "vless") {
-            configLink = `vless://${uuid}@${useExternalProxy ? externalProxy! : new URL(panel.url).hostname}:${inbound.obj.port}?type=${inbound.obj.streamSettings.network}&encryption=none&path=%2Fe200%3Dhost&host=backup.movie4dl.xyz&headerType=http&security=${inbound.obj.streamSettings.security}#${inbound.obj.remark}-${email}`;
+            const url = useExternalProxy
+              ? externalProxy!
+              : new URL(panel.url).hostname;
+            configLink = `vless://${uuid}@${url}:${inbound.obj.port}?type=${inbound.obj.streamSettings.network}&encryption=${inbound.obj.settings.encryption || "none"}&path=${encodeURIComponent(inbound.obj.streamSettings.tcpSettings.header.request.path.at(0) || "")}&host=${inbound.obj.streamSettings.tcpSettings.header.request.headers.Host.at(0)}&headerType=${inbound.obj.streamSettings.tcpSettings.header.type}&security=${inbound.obj.streamSettings.security}#${inbound.obj.remark}-${email}`;
           }
 
           const qrBuffer = await QRCode.toBuffer(configLink, {
