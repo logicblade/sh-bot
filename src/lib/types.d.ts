@@ -123,13 +123,20 @@ interface Client {
 interface StreamSettings {
   network: string;
   security: string;
-  externalProxy: any[];
+  externalProxy: ExternalProxy[];
   tcpSettings: {
     acceptProxyProtocol: boolean;
     header: {
       type: string;
     };
   };
+}
+
+interface ExternalProxy {
+  forceTls: string;
+  dest: string;
+  port: number;
+  remark: string;
 }
 
 interface ConfigJSON {

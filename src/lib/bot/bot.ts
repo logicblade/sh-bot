@@ -287,11 +287,17 @@ export class TelBot {
 
           const inbound = await panel.getInboundByID(Number(WHICH_INBOUND));
 
+          const useExternalProxy =
+            inbound?.obj.streamSettings.externalProxy.at(0)?.dest !== "";
+          const externalProxy = useExternalProxy
+            ? inbound?.obj.streamSettings.externalProxy.at(0)?.dest
+            : undefined;
+
           let configLink = "";
           if (inbound.obj.protocol === "vmess") {
             configLink = generateVmessLink({
               name: `${inbound.obj.remark}-${email}`,
-              server: panel.url,
+              server: useExternalProxy ? externalProxy! : panel.url,
               port: inbound.obj.port,
               uuid: uuid,
               network: inbound.obj.streamSettings.network,
@@ -299,7 +305,7 @@ export class TelBot {
               path: "/e200=host",
             });
           } else if (inbound.obj.protocol === "vless") {
-            configLink = `vless://${uuid}@${new URL(panel.url).hostname}:${inbound.obj.port}?type=${inbound.obj.streamSettings.network}&encryption=none&path=%2Fe200%3Dhost&host=backup.movie4dl.xyz&headerType=http&security=${inbound.obj.streamSettings.security}#${inbound.obj.remark}-${email}`;
+            configLink = `vless://${uuid}@${useExternalProxy ? externalProxy! : new URL(panel.url).hostname}:${inbound.obj.port}?type=${inbound.obj.streamSettings.network}&encryption=none&path=%2Fe200%3Dhost&host=backup.movie4dl.xyz&headerType=http&security=${inbound.obj.streamSettings.security}#${inbound.obj.remark}-${email}`;
           }
 
           const qrBuffer = await QRCode.toBuffer(configLink, {
