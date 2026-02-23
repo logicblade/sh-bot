@@ -15,7 +15,7 @@ import { adminMenu, mainMenu, renewMenu } from "./keyboards";
 import type { DB } from "../../util/db";
 import type { Conversation } from "@grammyjs/conversations";
 import { db } from "../..";
-import { getAllPanels, Panel } from "../panel/panel";
+import { getAllPanels } from "../panel/panel";
 import { Util } from "../../util/util";
 import { creatingEmail } from "./bot";
 

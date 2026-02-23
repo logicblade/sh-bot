@@ -29,7 +29,6 @@ import {
 } from "./helpers";
 import {
   buySubBtn,
-  buySubTxt,
   tutorialBtnTxt,
   myPanelsBtn,
   addPanelBtn,
