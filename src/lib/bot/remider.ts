@@ -6,13 +6,15 @@ import { getAllPanels } from "../panel/panel";
 async function getExpiringClients(db: DB) {
   const panels = getAllPanels(db);
 
-  const clients: ExpiryCheckUser[] = [];
+  const clientsDate: ExpiryCheckUser[] = [];
+  const clientsTraffic: ExpiryCheckUser[] = [];
 
   for (const panel of panels) {
     const inbounds = await panel.getInbounds();
 
     if (inbounds) {
-      const users: ExpiryCheckUser[] = [];
+      const usersDate: ExpiryCheckUser[] = [];
+      const usersTraffic: ExpiryCheckUser[] = [];
 
       for (const obj of inbounds.obj) {
         obj.settings.clients.forEach((client) => {
@@ -24,14 +26,20 @@ async function getExpiringClients(db: DB) {
           const now = Date.now();
 
           if (
-            (client.expiryTime - now <= Util.getUnixTimeOf({ days: 3 }) &&
-              client.expiryTime !== 0 &&
-              client.enable) ||
-            (remainingGB <= Util.gigsToBytes(3) &&
-              client.totalGB !== 0 &&
-              client.enable)
+            client.expiryTime - now <= Util.getUnixTimeOf({ days: 2 }) &&
+            client.expiryTime !== 0 &&
+            client.enable
           ) {
-            users.push({
+            usersDate.push({
+              email: client.email,
+              tgID: client.tgId || client.comment,
+            });
+          } else if (
+            remainingGB <= Util.gigsToBytes(2) &&
+            client.totalGB !== 0 &&
+            client.enable
+          ) {
+            usersTraffic.push({
               email: client.email,
               tgID: client.tgId || client.comment,
             });
@@ -41,18 +49,30 @@ async function getExpiringClients(db: DB) {
     }
   }
 
-  return clients;
+  return { clientsDate, clientsTraffic };
 }
 
 export async function informUserExpiry(db: DB) {
-  const clients = await getExpiringClients(db);
+  const { clientsDate, clientsTraffic } = await getExpiringClients(db);
 
-  clients.forEach((client) => {
+  clientsDate.forEach((client) => {
     bot.bot.api.sendMessage(
       client.tgID,
       `
 💡 کاربر گرامی
-از سرویس اشتراک ${client.email} (کمتر از 3 روز) باقی مانده است. 
+از سرویس اشتراک ${client.email} (کمتر از 2 روز) باقی مانده است. 
+میتوانید از قسمت | تمدید اشتراک| 
+اشتراک خود را تمدید کنید✅
+        `,
+    );
+  });
+
+  clientsTraffic.forEach((client) => {
+    bot.bot.api.sendMessage(
+      client.tgID,
+      `
+💡 کاربر گرامی
+از سرویس اشتراک ${client.email} (کمتر از 2 گیگابایت) باقی مانده است. 
 میتوانید از قسمت | تمدید اشتراک| 
 اشتراک خود را تمدید کنید✅
         `,

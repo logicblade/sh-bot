@@ -8,7 +8,7 @@ if [ ! -t 0 ]; then
 fi
 
 ### ===== CONFIG =====
-REPO_URL="https://github.com/rivethorn/sh-bot.git"
+REPO_URL="https://github.com/logicblade/sh-bot.git"
 APP_NAME="FoxNG"
 INSTALL_DIR="/opt/$APP_NAME"
 SERVICE_NAME="$APP_NAME.service"

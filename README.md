@@ -5,7 +5,7 @@ A Telegram bot that connects to you 3X-UI v2ray VPN panel and let's you automate
 Usage:
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/rivethorn/sh-bot/refs/heads/main/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/logicblade/sh-bot/refs/heads/main/install.sh)
 ```
 
 This will install the bot and ask you for your Telegram bot token and your telegram user ID for admin purposes.
@@ -13,7 +13,7 @@ This will install the bot and ask you for your Telegram bot token and your teleg
 To update, you can use:
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/rivethorn/sh-bot/refs/heads/main/update.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/logicblade/sh-bot/refs/heads/main/update.sh)
 ```
 
 **IMPORTANT**
