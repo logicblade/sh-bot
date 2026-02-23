@@ -1,0 +1,54 @@
+import { Database } from "bun:sqlite";
+
+export class DB {
+  db: Database;
+  constructor() {
+    this.db = new Database("panels.sqlite");
+
+    this.db.run(`
+  CREATE TABLE IF NOT EXISTS credentials (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    url TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL UNIQUE,
+    username TEXT NOT NULL,
+    password TEXT NOT NULL
+  )
+`);
+  }
+
+  addPanel(url: string, name: string, username: string, password: string) {
+    const stmt = this.db.prepare(
+      "INSERT INTO credentials (url, name, username, password) VALUES (?, ?, ?, ?)",
+    );
+    try {
+      url = url.endsWith("/") ? url.slice(0, -1) : url;
+      stmt.run(url, name, username, password);
+    } catch (error) {
+      if (String(error).includes("UNIQUE")) {
+        console.log("no no no");
+      }
+    }
+  }
+
+  deletePanelByName(name: string): boolean {
+    const stmt = this.db.prepare("DELETE FROM credentials WHERE name = ?");
+
+    const result = stmt.run(name);
+
+    // result.changes === number of rows affected
+    const deleted = result.changes > 0;
+
+    if (deleted) {
+      console.log(`Deleted credential for name: ${name}`);
+    }
+
+    return deleted;
+  }
+
+  getPanels() {
+    const creds = this.db
+      .query("SELECT * FROM credentials")
+      .all() as Credential[];
+    return creds;
+  }
+}
