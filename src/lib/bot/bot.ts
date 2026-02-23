@@ -297,7 +297,9 @@ export class TelBot {
           if (inbound.obj.protocol === "vmess") {
             configLink = generateVmessLink({
               name: `${inbound.obj.remark}-${email}`,
-              server: useExternalProxy ? externalProxy! : panel.url,
+              server: useExternalProxy
+                ? externalProxy!
+                : new URL(panel.url).hostname,
               port: inbound.obj.port,
               uuid: uuid,
               network: inbound.obj.streamSettings.network,

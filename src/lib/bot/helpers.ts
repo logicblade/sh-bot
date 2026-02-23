@@ -448,7 +448,7 @@ export function generateVmessLink(data: {
   const vmessConfig = {
     v: "2",
     ps: data.name,
-    add: new URL(data.server).hostname,
+    add: data.server,
     port: data.port.toString(),
     id: data.uuid,
     aid: "0",
