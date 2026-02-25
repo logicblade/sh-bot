@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 import { DB } from "./util/db";
 import { TelBot } from "./lib/bot/bot";
 import { ADMIN_ID } from "./lib/bot/helpers";
-import nodeCron from "node-cron";
+import { CronJob } from "cron";
 import { informUserExpiry } from "./lib/bot/remider";
 
 export const WHICH_PANEL = "T1";
@@ -13,6 +13,18 @@ dotenv.config({ quiet: true });
 export const db = new DB();
 
 export const bot = new TelBot(process.env.BOT_TOKEN!, db);
+
+const remider = new CronJob(
+  "00 00 22 * * *",
+  function () {
+    informUserExpiry(db);
+  },
+  null,
+  true,
+  "Asia/Tehran",
+);
+
+remider.start();
 
 bot.bot.start();
 
@@ -25,15 +37,5 @@ bot.bot.catch(async (error) => {
 ${error.message}`,
   );
 });
-
-nodeCron.schedule(
-  "0 22 * * *",
-  () => {
-    informUserExpiry(db);
-  },
-  {
-    timezone: "Asia/Tehran",
-  },
-);
 
 console.log("Running...");
