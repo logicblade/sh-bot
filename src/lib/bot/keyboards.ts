@@ -14,6 +14,7 @@ import {
   appStateBtn,
   changeRenewStateBtn,
   changeSellStateBtn,
+  getConfigBtn,
 } from "./messages";
 
 export const shareContactKey = new Keyboard()
@@ -25,9 +26,10 @@ export const mainMenu = new Keyboard()
   .text(renewSubBtn)
   .text(buySubBtn)
   .row()
-  .text(tutorialBtnTxt)
+  .text(getConfigBtn)
   .text(mySubBtn)
   .row()
+  .text(tutorialBtnTxt)
   .text(contactTxt)
   .resized()
   .persistent();

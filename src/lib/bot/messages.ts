@@ -11,6 +11,7 @@ export const buySubBtn = "🚀 خرید اشتراک جدید";
 export const renewSubBtn = "♻️ تمدید اشتراک";
 export const contactTxt = "👨🏼‍💻 ارتباط با پشتیبانی";
 export const tutorialBtnTxt = "⚙️ آموزش اتصال به کانفیگ";
+export const getConfigBtn = "🔗 دریافت دوباره لینک کانفیگ";
 export const resetBtn = "بازگشت به منو اصلی 🔙";
 export const cancelBtn = "لغو سفارش";
 export const creatingTestConfTxt = `در حال ساختن کانفیگ تست
@@ -48,6 +49,9 @@ export const subFoundTxt = `
 🟡: اشتراک فعال ولی نزدیک انقضاست
 🟠: تا حالا به اشتراک وصل نشدی
 🔴: اشتراک منقضی شده
+`;
+export const subFoundGetConfTxt = `
+اشتراکی که لینکشو میخوای انتخاب کن: 👇🚀
 `;
 export const statusEnabledTxt = `
 اشتراک شما هنوز فعال است.
