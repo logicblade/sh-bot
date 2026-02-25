@@ -1,14 +1,15 @@
-import { Bot, Context, InputFile, Keyboard } from "grammy";
+import { Bot, Context, Keyboard } from "grammy";
 import { DB } from "../../util/db";
-import QRCode from "qrcode";
 import {
   addPanelConv,
   ADMIN_ID,
-  generateVmessLink,
+  genConfig,
+  getConfigCache,
   getConfigsPanel,
   handleCheckAccount,
   handleCreateAccount,
   handleCreateDeclineCallback,
+  handleGetConfig,
   handleImagesIncome,
   handleRenewAccount,
   handleRenewCallback,
@@ -51,6 +52,7 @@ import {
   appStateBtn,
   changeSellStateBtn,
   changeRenewStateBtn,
+  getConfigBtn,
 } from "./messages";
 import {
   type ConversationFlavor,
@@ -95,7 +97,7 @@ export class TelBot {
       switch (ctx.message.text) {
         case buySubBtn:
           if (!state.isSellActive) {
-            await ctx.reply(disableSellTxt);
+            await ctx.reply(disableSellTxt, { reply_markup: mainMenu });
             break;
           }
           await handleCreateAccount(ctx);
@@ -107,22 +109,31 @@ export class TelBot {
 
         case renewSubBtn:
           if (!state.isRenewActive) {
-            ctx.reply(disableRenewTxt);
+            ctx.reply(disableRenewTxt, { reply_markup: mainMenu });
             break;
           }
           await handleRenewAccount(ctx, db);
           break;
 
+        case getConfigBtn:
+          await handleGetConfig(ctx, db);
+          break;
+
         case tutorialBtnTxt:
-          await ctx.reply("آموزش به زودی اضافه میشه! لطفا صبور باشید...");
+          await ctx.reply("آموزش به زودی اضافه میشه! لطفا صبور باشید...", {
+            reply_markup: mainMenu,
+          });
           break;
 
         case contactTxt:
-          await ctx.reply(`
+          await ctx.reply(
+            `
 برای ارتباط با پشتیبانی میتونید به آیدی زیر پیام بدید 👇
 
 🆔: @foxngsup
-      `);
+      `,
+            { reply_markup: mainMenu },
+          );
           break;
 
         case resetBtn:
@@ -187,7 +198,9 @@ export class TelBot {
 
         case myPanelsBtn:
           if (userID !== ADMIN_ID) {
-            await ctx.reply("این حرفا رو از کجا یاد گرفتی؟؟");
+            await ctx.reply("این حرفا رو از کجا یاد گرفتی؟؟", {
+              reply_markup: mainMenu,
+            });
             break;
           }
           await showPanelsListToAdmin(ctx, db);
@@ -195,7 +208,9 @@ export class TelBot {
 
         case addPanelBtn:
           if (userID !== ADMIN_ID) {
-            await ctx.reply("این حرفا رو از کجا یاد گرفتی؟؟");
+            await ctx.reply("این حرفا رو از کجا یاد گرفتی؟؟", {
+              reply_markup: mainMenu,
+            });
             break;
           }
           await ctx.conversation.enter("addPanelConv");
@@ -203,7 +218,9 @@ export class TelBot {
 
         case deletePanelBtn:
           if (userID !== ADMIN_ID) {
-            await ctx.reply("این حرفا رو از کجا یاد گرفتی؟؟");
+            await ctx.reply("این حرفا رو از کجا یاد گرفتی؟؟", {
+              reply_markup: mainMenu,
+            });
             break;
           }
           await ctx.conversation.enter("removePanelConv");
@@ -211,7 +228,9 @@ export class TelBot {
 
         case appStateBtn:
           if (userID !== ADMIN_ID) {
-            await ctx.reply("این حرفا رو از کجا یاد گرفتی؟؟");
+            await ctx.reply("این حرفا رو از کجا یاد گرفتی؟؟", {
+              reply_markup: mainMenu,
+            });
             break;
           }
           await ctx.reply(
@@ -221,7 +240,9 @@ export class TelBot {
 
         case changeSellStateBtn:
           if (userID !== ADMIN_ID) {
-            await ctx.reply("این حرفا رو از کجا یاد گرفتی؟؟");
+            await ctx.reply("این حرفا رو از کجا یاد گرفتی؟؟", {
+              reply_markup: mainMenu,
+            });
             break;
           }
           state.isSellActive = !state.isSellActive;
@@ -232,7 +253,9 @@ export class TelBot {
 
         case changeRenewStateBtn:
           if (userID !== ADMIN_ID) {
-            await ctx.reply("این حرفا رو از کجا یاد گرفتی؟؟");
+            await ctx.reply("این حرفا رو از کجا یاد گرفتی؟؟", {
+              reply_markup: mainMenu,
+            });
             break;
           }
           state.isRenewActive = !state.isRenewActive;
@@ -331,46 +354,7 @@ export class TelBot {
 
           const responseBody = await res.body?.text();
 
-          const inbound = await panel.getInboundByID(Number(WHICH_INBOUND));
-
-          const useExternalProxy =
-            inbound?.obj.streamSettings.externalProxy.at(0)?.dest !== "";
-          const externalProxy = useExternalProxy
-            ? inbound?.obj.streamSettings.externalProxy.at(0)?.dest
-            : undefined;
-
-          let configLink = "";
-          if (inbound.obj.protocol === "vmess") {
-            configLink = generateVmessLink({
-              name: `${inbound.obj.remark}-${email}`,
-              server: useExternalProxy
-                ? externalProxy!
-                : new URL(panel.url).hostname,
-              port: inbound.obj.port,
-              uuid: uuid,
-              network: inbound.obj.streamSettings.network,
-              host: inbound.obj.streamSettings.tcpSettings.header.request.headers.Host.at(
-                0,
-              ),
-              path: inbound.obj.streamSettings.tcpSettings.header.request.path.at(
-                0,
-              ),
-              header: inbound.obj.streamSettings.tcpSettings.header.type,
-            });
-          } else if (inbound.obj.protocol === "vless") {
-            const url = useExternalProxy
-              ? externalProxy!
-              : new URL(panel.url).hostname;
-            configLink = `vless://${uuid}@${url}:${inbound.obj.port}?type=${inbound.obj.streamSettings.network}&encryption=${inbound.obj.settings.encryption || "none"}&path=${encodeURIComponent(inbound.obj.streamSettings.tcpSettings.header.request.path.at(0) || "")}&host=${inbound.obj.streamSettings.tcpSettings.header.request.headers.Host.at(0)}&headerType=${inbound.obj.streamSettings.tcpSettings.header.type}&security=${inbound.obj.streamSettings.security}#${inbound.obj.remark}-${email}`;
-          }
-
-          const qrBuffer = await QRCode.toBuffer(configLink, {
-            type: "png",
-            width: 400,
-            margin: 2,
-          });
-
-          const qrFile = new InputFile(qrBuffer, "config.png");
+          const { qrFile, configLink } = await genConfig(panel, email, uuid);
 
           if (res.status === 200 && responseBody?.includes("true")) {
             await ctx.api.sendPhoto(userId, qrFile, {
@@ -483,6 +467,32 @@ export class TelBot {
       } else {
         console.log(res.status);
       }
+    });
+    this.bot.callbackQuery(/^getConfig:/, async (ctx) => {
+      const index = Number(ctx.callbackQuery?.data?.replace("getConfig:", ""));
+      const userID = ctx.from?.id!;
+
+      const configs = getConfigCache[userID];
+
+      if (!configs) return;
+
+      const selected = configs[index];
+
+      const panel = await getConfigsPanel(selected?.uuid!, db);
+
+      const { qrFile, configLink } = await genConfig(
+        panel!,
+        Util.removeEmoji(selected?.email.split("-").slice(1).join("-")!),
+        selected?.uuid!,
+        selected?.inboundID,
+      );
+
+      await ctx.deleteMessage();
+      await ctx.api.sendPhoto(userID, qrFile, {
+        caption: `لینک کانفیگ شما به نام ${Util.removeEmoji(selected?.email!)} 👇\n(برای کپی کردن لینک یک بار روی آن کلیک کنید.)\n\n<code>${configLink}</code>`,
+        parse_mode: "HTML",
+      });
+      await ctx.answerCallbackQuery();
     });
   }
 }

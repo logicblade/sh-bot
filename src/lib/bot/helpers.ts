@@ -1,4 +1,5 @@
-import { type Context, InlineKeyboard } from "grammy";
+import { type Context, InlineKeyboard, InputFile } from "grammy";
+import QRCode from "qrcode";
 import {
   bigGreet,
   justImageTxt,
@@ -8,19 +9,21 @@ import {
   statusEnabledTxt,
   statusNotStartedtxt,
   statusOffTxt,
+  subFoundGetConfTxt,
   subFoundTxt,
   welcomeAdminTxt,
 } from "./messages";
 import { adminMenu, mainMenu, renewMenu } from "./keyboards";
 import type { DB } from "../../util/db";
 import type { Conversation } from "@grammyjs/conversations";
-import { db } from "../..";
-import { getAllPanels } from "../panel/panel";
+import { db, WHICH_INBOUND } from "../..";
+import { getAllPanels, Panel } from "../panel/panel";
 import { Util } from "../../util/util";
 import { creatingEmail } from "./bot";
 
 export const ADMIN_ID = Number(process.env.ADMIN_ID!);
 export const renewCache: Record<number, UserConfig[]> = {};
+export const getConfigCache: Record<number, UserConfig[]> = {};
 
 export const waitingForRenewImage = new Set<number>();
 export const pendingRenewals = new Map<number, { photoFileID: string }>();
@@ -229,6 +232,37 @@ export const handleCreateDeclineCallback = async (ctx: Context) => {
   await ctx.answerCallbackQuery();
 };
 
+export async function handleGetConfig(ctx: Context, db: DB) {
+  const looking = await ctx.reply(searchingTxt);
+
+  const panels = getAllPanels(db);
+  let configs: UserConfig[] = [];
+
+  for (const panel of panels) {
+    const config = await panel.getUserConfigs(ctx.from?.id!);
+    if (config) {
+      config.forEach((conf) => configs.push(conf));
+    }
+  }
+
+  await ctx.api.deleteMessage(ctx.from?.id!, looking.message_id);
+  if (configs.length === 0) {
+    await ctx.reply(noSubFoundTxt);
+  } else {
+    const keyboard = new InlineKeyboard();
+
+    configs.forEach((config, idx) => {
+      keyboard.text(Util.removeEmoji(config.email), `getConfig:${idx}`).row();
+    });
+
+    getConfigCache[ctx.from?.id!] = configs;
+
+    await ctx.reply(subFoundGetConfTxt, {
+      reply_markup: keyboard,
+    });
+  }
+}
+
 export async function handleRenewAccount(ctx: Context, db: DB) {
   const looking = await ctx.reply(searchingTxt);
 
@@ -285,7 +319,7 @@ export async function handleCheckAccount(ctx: Context, db: DB) {
 
   await ctx.api.deleteMessage(ctx.from?.id!, looking.message_id);
   if (configs.length === 0) {
-    await ctx.reply(noSubFoundTxt);
+    await ctx.reply(noSubFoundTxt, { reply_markup: mainMenu });
   } else {
     let statusTxt = "🔋وضعیت حساب شما:\n\n";
 
@@ -297,7 +331,7 @@ export async function handleCheckAccount(ctx: Context, db: DB) {
       statusTxt += `${conf.status ? (conf.isRenewable ? "🟡" : "🟢") : "🔴"} ${email} - ${conf.status ? (conf.isRenewable ? "نزدیک انقضا" : "فعال") : "به اتمام رسیده"}\n`;
     }
 
-    await ctx.reply(statusTxt);
+    await ctx.reply(statusTxt, { reply_markup: mainMenu });
   }
 }
 
@@ -467,4 +501,68 @@ export function generateVmessLink(data: {
 
   const base64 = Buffer.from(JSON.stringify(vmessConfig)).toString("base64");
   return `vmess://${base64}`;
+}
+
+export async function genConfig(
+  panel: Panel,
+  email: string,
+  uuid: UUID,
+  inboundID?: number,
+) {
+  const inbound = await panel.getInboundByID(
+    inboundID ? inboundID : Number(WHICH_INBOUND),
+  );
+
+  const useExternalProxy =
+    inbound.obj.streamSettings.externalProxy.length !== 0
+      ? inbound?.obj.streamSettings.externalProxy.at(0)?.dest !== ""
+      : false;
+  const externalProxy = useExternalProxy
+    ? inbound?.obj.streamSettings.externalProxy.at(0)?.dest
+    : undefined;
+
+  let configLink = "";
+  if (inbound.obj.protocol === "vmess") {
+    configLink = generateVmessLink({
+      name: `${inbound.obj.remark}-${email}`,
+      server: useExternalProxy ? externalProxy! : new URL(panel.url).hostname,
+      port: inbound.obj.port,
+      uuid: uuid,
+      network: inbound.obj.streamSettings.network,
+      host: inbound.obj.streamSettings.tcpSettings.header.request
+        ? inbound.obj.streamSettings.tcpSettings.header.request.headers.Host.at(
+            0,
+          )
+        : undefined,
+      path: inbound.obj.streamSettings.tcpSettings.header.request
+        ? inbound.obj.streamSettings.tcpSettings.header.request.path.at(0)
+        : undefined,
+      header: inbound.obj.streamSettings.tcpSettings.header.type,
+    });
+  } else if (inbound.obj.protocol === "vless") {
+    const url = useExternalProxy ? externalProxy! : new URL(panel.url).hostname;
+
+    configLink = `vless://${uuid}@${url}:${inbound.obj.port}?type=${inbound.obj.streamSettings.network}&encryption=${inbound.obj.settings.encryption || "none"}${
+      inbound.obj.streamSettings.tcpSettings.header.request
+        ? `&path=${encodeURIComponent(
+            inbound.obj.streamSettings.tcpSettings.header.request.path.at(0)!,
+          )}`
+        : ""
+    }${
+      inbound.obj.streamSettings.tcpSettings.header.request
+        ? `&host=${inbound.obj.streamSettings.tcpSettings.header.request.headers.Host.at(
+            0,
+          )}`
+        : ""
+    }&headerType=${inbound.obj.streamSettings.tcpSettings.header.type}&security=${inbound.obj.streamSettings.security}#${inbound.obj.remark}-${email}`;
+  }
+
+  const qrBuffer = await QRCode.toBuffer(configLink, {
+    type: "png",
+    width: 400,
+    margin: 2,
+  });
+
+  const qrFile = new InputFile(qrBuffer, "config.png");
+  return { qrFile, configLink };
 }
