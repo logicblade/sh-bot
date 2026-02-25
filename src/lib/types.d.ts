@@ -1,3 +1,8 @@
+interface State {
+  isSellActive: boolean;
+  isRenewActive: boolean;
+}
+
 /// Helper type for database
 interface Credential {
   id: number;

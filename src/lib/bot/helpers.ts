@@ -32,6 +32,11 @@ export const pendingCreates = new Map<number, { photoFileID: string }>();
 export const pendingCreateConfig = new Set<number>();
 export const pendingCreateConfigType = new Map<number, ConfigPrice>();
 
+export const state: State = {
+  isRenewActive: true,
+  isSellActive: true,
+};
+
 const replyToAdmin = async (ctx: Context, msg: string) => {
   return await ctx.api.sendMessage(ADMIN_ID, msg, { reply_markup: adminMenu });
 };

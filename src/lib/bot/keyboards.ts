@@ -11,6 +11,9 @@ import {
   addPanelBtn,
   myPanelsBtn,
   deletePanelBtn,
+  appStateBtn,
+  changeRenewStateBtn,
+  changeSellStateBtn,
 } from "./messages";
 
 export const shareContactKey = new Keyboard()
@@ -47,4 +50,9 @@ export const adminMenu = new Keyboard()
   .row()
   .text(deletePanelBtn)
   .text(addPanelBtn)
+  .row()
+  .text(appStateBtn)
+  .row()
+  .text(changeRenewStateBtn)
+  .text(changeSellStateBtn)
   .resized();

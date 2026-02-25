@@ -24,6 +24,7 @@ import {
   removePanelConv,
   renewCache,
   showPanelsListToAdmin,
+  state,
   waitingForCreateImage,
   waitingForRenewImage,
 } from "./helpers";
@@ -45,6 +46,11 @@ import {
   contactTxt,
   buyTxt250,
   buyTxt450,
+  disableSellTxt,
+  disableRenewTxt,
+  appStateBtn,
+  changeSellStateBtn,
+  changeRenewStateBtn,
 } from "./messages";
 import {
   type ConversationFlavor,
@@ -88,6 +94,10 @@ export class TelBot {
 
       switch (ctx.message.text) {
         case buySubBtn:
+          if (!state.isSellActive) {
+            await ctx.reply(disableSellTxt);
+            break;
+          }
           await handleCreateAccount(ctx);
           break;
 
@@ -96,6 +106,10 @@ export class TelBot {
           break;
 
         case renewSubBtn:
+          if (!state.isRenewActive) {
+            ctx.reply(disableRenewTxt);
+            break;
+          }
           await handleRenewAccount(ctx, db);
           break;
 
@@ -193,6 +207,38 @@ export class TelBot {
             break;
           }
           await ctx.conversation.enter("removePanelConv");
+          break;
+
+        case appStateBtn:
+          if (userID !== ADMIN_ID) {
+            await ctx.reply("این حرفا رو از کجا یاد گرفتی؟؟");
+            break;
+          }
+          await ctx.reply(
+            `وضعیت خرید و تمدید:\n\nخرید: ${state.isSellActive ? "فعال" : "غیرفعال"}\nتمدید: ${state.isRenewActive ? "فعال" : "غیرفعال"}`,
+          );
+          break;
+
+        case changeSellStateBtn:
+          if (userID !== ADMIN_ID) {
+            await ctx.reply("این حرفا رو از کجا یاد گرفتی؟؟");
+            break;
+          }
+          state.isSellActive = !state.isSellActive;
+          await ctx.reply(
+            `وضعیت خرید به ${state.isSellActive} تغییر پیدا کرد.`,
+          );
+          break;
+
+        case changeRenewStateBtn:
+          if (userID !== ADMIN_ID) {
+            await ctx.reply("این حرفا رو از کجا یاد گرفتی؟؟");
+            break;
+          }
+          state.isRenewActive = !state.isRenewActive;
+          await ctx.reply(
+            `وضعیت تمدید به ${state.isRenewActive} تغییر پیدا کرد.`,
+          );
           break;
 
         default:

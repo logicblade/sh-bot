@@ -27,6 +27,12 @@ export const buySubTxt = `
 🆔: @foxngsup
 `;
 export const searchingTxt = "⏳ در حال جستجو...";
+export const disableSellTxt = `
+کاربر عزیز، متاسفانه در حال حاضر امکان خرید اشتراک جدید وجود ندارد 😓⛔️
+`;
+export const disableRenewTxt = `
+کاربر عزیز، متاسفانه در حال حاضر امکان تمدید اشتراک وجود ندارد 😓⛔️
+`;
 export const noSubFoundTxt = `
 کاربر عزیز، اشتراک شما پیدا نشد 😓⛔️
 
@@ -108,6 +114,9 @@ export const justImageTxt = `
 export const myPanelsBtn = "پنل های من";
 export const addPanelBtn = "اضافه کردن پنل";
 export const deletePanelBtn = "حذف کردن پنل";
+export const appStateBtn = "وضعیت خرید و تمدید";
+export const changeSellStateBtn = "تغییر وضعیت خرید";
+export const changeRenewStateBtn = "تغییر وضعیت تمدید";
 
 export const welcomeAdminTxt = `
 خوش اومدی!
