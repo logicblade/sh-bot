@@ -226,7 +226,7 @@ export class TelBot {
           }
           state.isSellActive = !state.isSellActive;
           await ctx.reply(
-            `وضعیت خرید به ${state.isSellActive} تغییر پیدا کرد.`,
+            `وضعیت خرید به ${state.isSellActive ? "فعال" : "غیرفعال"} تغییر پیدا کرد.`,
           );
           break;
 
@@ -237,7 +237,7 @@ export class TelBot {
           }
           state.isRenewActive = !state.isRenewActive;
           await ctx.reply(
-            `وضعیت تمدید به ${state.isRenewActive} تغییر پیدا کرد.`,
+            `وضعیت تمدید به ${state.isRenewActive ? "فعال" : "غیرفعال"} تغییر پیدا کرد.`,
           );
           break;
 
