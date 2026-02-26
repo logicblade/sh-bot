@@ -46,6 +46,9 @@ async function getExpiringClients(db: DB) {
           }
         });
       }
+
+      if (usersDate.length > 0) clientsDate.push(...usersDate);
+      if (usersTraffic.length > 0) clientsTraffic.push(...usersTraffic);
     }
   }
 
