@@ -121,6 +121,7 @@ export const deletePanelBtn = "حذف کردن پنل";
 export const appStateBtn = "وضعیت خرید و تمدید";
 export const changeSellStateBtn = "تغییر وضعیت خرید";
 export const changeRenewStateBtn = "تغییر وضعیت تمدید";
+export const backupBtn = "بکاپ گرفتن از دیتابیس";
 
 export const welcomeAdminTxt = `
 خوش اومدی!

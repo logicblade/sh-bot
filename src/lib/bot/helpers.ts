@@ -563,3 +563,15 @@ export async function genConfig(
   const qrFile = new InputFile(qrBuffer, "config.png");
   return { qrFile, configLink };
 }
+
+export async function handleBackup(ctx: Context) {
+  try {
+    const file = new InputFile("./panels.sqlite");
+    await ctx.api.sendDocument(ADMIN_ID, file, {
+      caption: "تقدیم به شما",
+    });
+  } catch (error) {
+    console.error("Backup failed:", error);
+    await ctx.reply("❌ Backup failed");
+  }
+}

@@ -15,6 +15,7 @@ import {
   changeRenewStateBtn,
   changeSellStateBtn,
   getConfigBtn,
+  backupBtn,
 } from "./messages";
 
 export const shareContactKey = new Keyboard()
@@ -57,4 +58,6 @@ export const adminMenu = new Keyboard()
   .row()
   .text(changeRenewStateBtn)
   .text(changeSellStateBtn)
+  .row()
+  .text(backupBtn)
   .resized();

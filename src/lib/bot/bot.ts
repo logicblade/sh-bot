@@ -6,6 +6,7 @@ import {
   genConfig,
   getConfigCache,
   getConfigsPanel,
+  handleBackup,
   handleCheckAccount,
   handleCreateAccount,
   handleCreateDeclineCallback,
@@ -53,6 +54,7 @@ import {
   changeSellStateBtn,
   changeRenewStateBtn,
   getConfigBtn,
+  backupBtn,
 } from "./messages";
 import {
   type ConversationFlavor,
@@ -262,6 +264,16 @@ export class TelBot {
           await ctx.reply(
             `وضعیت تمدید به ${state.isRenewActive ? "فعال" : "غیرفعال"} تغییر پیدا کرد.`,
           );
+          break;
+
+        case backupBtn:
+          if (userID !== ADMIN_ID) {
+            await ctx.reply("این حرفا رو از کجا یاد گرفتی؟؟", {
+              reply_markup: mainMenu,
+            });
+            break;
+          }
+          await handleBackup(ctx);
           break;
 
         default:
