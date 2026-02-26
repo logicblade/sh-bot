@@ -49,6 +49,7 @@ interface UserConfig {
 interface ExpiryCheckUser {
   email: string;
   tgID: string | number;
+  remark: string;
 }
 
 interface GetInboundsResponse {
