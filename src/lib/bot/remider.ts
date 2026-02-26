@@ -33,6 +33,7 @@ async function getExpiringClients(db: DB) {
             usersDate.push({
               email: client.email,
               tgID: client.tgId || client.comment,
+              remark: obj.remark,
             });
           } else if (
             remainingGB <= Util.gigsToBytes(2) &&
@@ -42,6 +43,7 @@ async function getExpiringClients(db: DB) {
             usersTraffic.push({
               email: client.email,
               tgID: client.tgId || client.comment,
+              remark: obj.remark,
             });
           }
         });
@@ -58,24 +60,30 @@ async function getExpiringClients(db: DB) {
 export async function informUserExpiry(db: DB) {
   const { clientsDate, clientsTraffic } = await getExpiringClients(db);
 
-  clientsDate.forEach((client) => {
-    bot.bot.api.sendMessage(
+  clientsDate.forEach(async (client) => {
+    await bot.bot.api.sendMessage(
       client.tgID,
       `
 ⚠️ کاربر گرامی ⚠️
-از سرویس اشتراک ${client.email} (کمتر از 2 روز) باقی مانده است. 
+
+از سرویس اشتراک ${client.remark}-${client.email}
+(کمتر از 2 روز) باقی مانده است.
+
 میتوانید از قسمت | تمدید اشتراک| 
 اشتراک خود را تمدید کنید✅
         `,
     );
   });
 
-  clientsTraffic.forEach((client) => {
-    bot.bot.api.sendMessage(
+  clientsTraffic.forEach(async (client) => {
+    await bot.bot.api.sendMessage(
       client.tgID,
       `
 ⚠️ کاربر گرامی ⚠️
-از سرویس اشتراک ${client.email} (کمتر از 2 گیگابایت) باقی مانده است. 
+
+از سرویس اشتراک ${client.remark}-${client.email}
+(کمتر از 2 گیگابایت) باقی مانده است.
+
 میتوانید از قسمت | تمدید اشتراک| 
 اشتراک خود را تمدید کنید✅
         `,
