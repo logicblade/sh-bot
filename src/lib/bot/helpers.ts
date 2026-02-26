@@ -324,9 +324,6 @@ export async function handleCheckAccount(ctx: Context, db: DB) {
     let statusTxt = "🔋وضعیت حساب شما:\n\n";
 
     for (const conf of configs) {
-      console.log(conf.status);
-      console.log(conf.inboundID);
-
       const email = Util.removeEmoji(conf.email);
       statusTxt += `${conf.status ? (conf.isRenewable ? "🟡" : "🟢") : "🔴"} ${email} - ${conf.status ? (conf.isRenewable ? "نزدیک انقضا" : "فعال") : "به اتمام رسیده"}\n`;
     }
