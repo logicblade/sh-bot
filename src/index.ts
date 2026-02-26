@@ -5,8 +5,8 @@ import { ADMIN_ID } from "./lib/bot/helpers";
 import { CronJob } from "cron";
 import { informUserExpiry } from "./lib/bot/remider";
 
-export const WHICH_PANEL = "T1";
-export const WHICH_INBOUND = "8";
+export const WHICH_PANEL = "direct1";
+export const WHICH_INBOUND = "1";
 
 dotenv.config({ quiet: true });
 
@@ -15,9 +15,10 @@ export const db = new DB();
 export const bot = new TelBot(process.env.BOT_TOKEN!, db);
 
 const remider = new CronJob(
-  "00 00 22 * * *",
-  function () {
-    informUserExpiry(db);
+  "00 00 15 * * *",
+  async function () {
+    await informUserExpiry(db);
+    console.log("cron job done");
   },
   null,
   true,
