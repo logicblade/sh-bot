@@ -66,10 +66,10 @@ export async function informUserExpiry(db: DB) {
       `
 ⚠️ کاربر گرامی ⚠️
 
-از سرویس اشتراک ${client.remark}-${client.email}
+‼️ از سرویس اشتراک "${client.remark}-${client.email}"
 (کمتر از 2 روز) باقی مانده است.
 
-میتوانید از قسمت | تمدید اشتراک| 
+میتوانید از قسمت "♻️ تمدید اشتراک" 
 اشتراک خود را تمدید کنید✅
         `,
     );
@@ -81,10 +81,10 @@ export async function informUserExpiry(db: DB) {
       `
 ⚠️ کاربر گرامی ⚠️
 
-از سرویس اشتراک ${client.remark}-${client.email}
+‼️ از سرویس اشتراک "${client.remark}-${client.email}"
 (کمتر از 2 گیگابایت) باقی مانده است.
 
-میتوانید از قسمت | تمدید اشتراک| 
+میتوانید از قسمت "♻️ تمدید اشتراک"
 اشتراک خود را تمدید کنید✅
         `,
     );
